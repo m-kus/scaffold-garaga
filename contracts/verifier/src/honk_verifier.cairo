@@ -1,6 +1,6 @@
 use super::honk_verifier_circuits::{
-    is_on_curve_bn254, run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_12_circuit,
-    run_GRUMPKIN_HONK_SUMCHECK_SIZE_12_PUB_17_circuit,
+    is_on_curve_bn254, run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_13_circuit,
+    run_GRUMPKIN_HONK_SUMCHECK_SIZE_13_PUB_18_circuit,
 };
 use super::honk_verifier_constants::{VK_HASH, precomputed_lines, vk};
 
@@ -30,8 +30,8 @@ mod UltraStarknetHonkVerifier {
     use garaga::utils::noir::{G2_POINT_KZG_1, G2_POINT_KZG_2, HonkProof};
     use super::{
         VK_HASH, is_on_curve_bn254, precomputed_lines,
-        run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_12_circuit,
-        run_GRUMPKIN_HONK_SUMCHECK_SIZE_12_PUB_17_circuit, vk,
+        run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_13_circuit,
+        run_GRUMPKIN_HONK_SUMCHECK_SIZE_13_PUB_18_circuit, vk,
     };
 
     #[storage]
@@ -64,7 +64,7 @@ mod UltraStarknetHonkVerifier {
                 StarknetHasherState,
             >(vk.circuit_size, vk.public_inputs_size, vk.public_inputs_offset, full_proof.proof);
             let log_n = vk.log_circuit_size;
-            let (sum_check_rlc, honk_check) = run_GRUMPKIN_HONK_SUMCHECK_SIZE_12_PUB_17_circuit(
+            let (sum_check_rlc, honk_check) = run_GRUMPKIN_HONK_SUMCHECK_SIZE_13_PUB_18_circuit(
                 p_public_inputs: full_proof.proof.public_inputs,
                 p_pairing_point_object: full_proof.proof.pairing_point_object,
                 p_public_inputs_offset: vk.public_inputs_offset.into(),
@@ -132,9 +132,10 @@ mod UltraStarknetHonkVerifier {
                 scalar_49,
                 scalar_50,
                 scalar_51,
+                scalar_52,
                 scalar_68,
             ) =
-                run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_12_circuit(
+                run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_13_circuit(
                 p_sumcheck_evaluations: full_proof.proof.sumcheck_evaluations,
                 p_gemini_a_evaluations: full_proof.proof.gemini_a_evaluations,
                 tp_gemini_r: transcript.gemini_r.into(),
@@ -186,8 +187,8 @@ mod UltraStarknetHonkVerifier {
 
             for gem_comm in full_proof.proof.gemini_fold_comms {
                 _points.append((*gem_comm).into());
-            } // log_n -1 = 11 points || Proof points 9-19
-            _points.append(full_proof.proof.kzg_quotient.into()); // Proof point 20
+            } // log_n -1 = 12 points || Proof points 9-20
+            _points.append(full_proof.proof.kzg_quotient.into()); // Proof point 21
             _points.append(BN254_G1_GENERATOR);
 
             let mut points = _points.span();
@@ -239,14 +240,15 @@ mod UltraStarknetHonkVerifier {
                 scalar_49,
                 scalar_50,
                 scalar_51,
+                scalar_52,
                 transcript.shplonk_z.into(),
                 scalar_68,
             ]
                 .span();
 
             // Check input points are on curve.
-            // Skip the first 27 points as they are from VK and keep the last 20 proof points
-            for point in points.slice(27, 20) {
+            // Skip the first 27 points as they are from VK and keep the last 21 proof points
+            for point in points.slice(27, 21) {
                 assert(is_on_curve_bn254(*point, mod_bn), 'proof point not on curve');
             }
 
@@ -255,7 +257,7 @@ mod UltraStarknetHonkVerifier {
             assert(is_on_curve_bn254(shplonk_q_pt, mod_bn), 'shplonk_q not on curve');
 
             let mut msm_hint = full_proof.msm_hint;
-            assert(msm_hint.len() == 48 * 12, 'wrong glv&fakeglv hint size');
+            assert(msm_hint.len() == 49 * 12, 'wrong glv&fakeglv hint size');
             let eigen = get_eigenvalue(0);
             let third_root_of_unity = get_third_root_of_unity(0);
             let min_one = get_min_one_order(0);
