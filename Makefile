@@ -51,7 +51,7 @@ declare-verifier:
 
 deploy-verifier:
 	# TODO: use class hash from the result of the `make declare-verifier` step
-	cd contracts && sncast deploy --salt 0x00 --class-hash 0x01a96a2599bc5239d5cecf9406d37dbf1ee8bf00b0ee5f3dddefdb8ea48e95ba
+	cd contracts && sncast deploy --salt 0x01 --class-hash 0x062e909aadcdf7d990f193fbce554ac96428b9e9f3fea9bd4f3fedd896b8c364
 
 artifacts:
 	cp ./circuit/target/circuit.json ./app/src/assets/circuit.json
