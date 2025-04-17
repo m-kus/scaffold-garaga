@@ -1,7 +1,7 @@
 use super::honk_verifier_circuits::{
-    is_on_curve_bn254, run_BN254_EVAL_FN_CHALLENGE_SING_48P_RLC_circuit,
-    run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_12_circuit,
-    run_GRUMPKIN_HONK_SUMCHECK_SIZE_12_PUB_17_circuit,
+    is_on_curve_bn254, run_BN254_EVAL_FN_CHALLENGE_SING_49P_RLC_circuit,
+    run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_13_circuit,
+    run_GRUMPKIN_HONK_SUMCHECK_SIZE_13_PUB_18_circuit,
 };
 use super::honk_verifier_constants::{VK_HASH, precomputed_lines, vk};
 
@@ -37,9 +37,9 @@ mod UltraKeccakHonkVerifier {
     use garaga::utils::noir::{G2_POINT_KZG_1, G2_POINT_KZG_2, HonkProof};
     use super::{
         VK_HASH, is_on_curve_bn254, precomputed_lines,
-        run_BN254_EVAL_FN_CHALLENGE_SING_48P_RLC_circuit,
-        run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_12_circuit,
-        run_GRUMPKIN_HONK_SUMCHECK_SIZE_12_PUB_17_circuit, vk,
+        run_BN254_EVAL_FN_CHALLENGE_SING_49P_RLC_circuit,
+        run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_13_circuit,
+        run_GRUMPKIN_HONK_SUMCHECK_SIZE_13_PUB_18_circuit, vk,
     };
 
     #[storage]
@@ -73,7 +73,7 @@ mod UltraKeccakHonkVerifier {
                 KeccakHasherState,
             >(vk.circuit_size, vk.public_inputs_size, vk.public_inputs_offset, full_proof.proof);
             let log_n = vk.log_circuit_size;
-            let (sum_check_rlc, honk_check) = run_GRUMPKIN_HONK_SUMCHECK_SIZE_12_PUB_17_circuit(
+            let (sum_check_rlc, honk_check) = run_GRUMPKIN_HONK_SUMCHECK_SIZE_13_PUB_18_circuit(
                 p_public_inputs: full_proof.proof.public_inputs,
                 p_pairing_point_object: full_proof.proof.pairing_point_object,
                 p_public_inputs_offset: vk.public_inputs_offset.into(),
@@ -141,9 +141,10 @@ mod UltraKeccakHonkVerifier {
                 scalar_49,
                 scalar_50,
                 scalar_51,
+                scalar_52,
                 scalar_68,
             ) =
-                run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_12_circuit(
+                run_GRUMPKIN_HONK_PREP_MSM_SCALARS_SIZE_13_circuit(
                 p_sumcheck_evaluations: full_proof.proof.sumcheck_evaluations,
                 p_gemini_a_evaluations: full_proof.proof.gemini_a_evaluations,
                 tp_gemini_r: transcript.gemini_r.into(),
@@ -195,8 +196,8 @@ mod UltraKeccakHonkVerifier {
 
             for gem_comm in full_proof.proof.gemini_fold_comms {
                 _points.append((*gem_comm).into());
-            } // log_n -1 = 11 points || Proof points 9-19
-            _points.append(full_proof.proof.kzg_quotient.into()); // Proof point 20
+            } // log_n -1 = 12 points || Proof points 9-20
+            _points.append(full_proof.proof.kzg_quotient.into()); // Proof point 21
             _points.append(BN254_G1_GENERATOR);
 
             let points = _points.span();
@@ -248,18 +249,19 @@ mod UltraKeccakHonkVerifier {
                 into_u256_unchecked(scalar_49),
                 into_u256_unchecked(scalar_50),
                 into_u256_unchecked(scalar_51),
+                into_u256_unchecked(scalar_52),
                 transcript.shplonk_z.into(),
                 into_u256_unchecked(scalar_68),
             ]
                 .span();
 
-            full_proof.msm_hint_batched.RLCSumDlogDiv.validate_degrees_batched(48);
+            full_proof.msm_hint_batched.RLCSumDlogDiv.validate_degrees_batched(49);
             // HASHING: GET ECIP BASE RLC COEFF.
             let (s0, s1, s2): (felt252, felt252, felt252) = hades_permutation(
                 'MSM_G1', 0, 1,
             ); // Init Sponge state
             let (s0, s1, s2) = hades_permutation(
-                s0 + 0.into(), s1 + 48.into(), s2,
+                s0 + 0.into(), s1 + 49.into(), s2,
             ); // Include curve_index and msm size
 
             // Hash precomputed VK hash with last transcript state
@@ -270,8 +272,8 @@ mod UltraKeccakHonkVerifier {
 
             // Check input points are on curve. No need to hash them : they are already in the
             // transcript + we precompute the VK hash.
-            // Skip the first 27 points as they are from VK and keep the last 20 proof points
-            for point in points.slice(27, 20) {
+            // Skip the first 27 points as they are from VK and keep the last 21 proof points
+            for point in points.slice(27, 21) {
                 assert(is_on_curve_bn254(*point, mod_bn), 'proof point not on curve');
             }
 
@@ -345,13 +347,13 @@ mod UltraKeccakHonkVerifier {
                 ),
             ];
 
-            let (lhs_fA0) = run_BN254_EVAL_FN_CHALLENGE_SING_48P_RLC_circuit(
+            let (lhs_fA0) = run_BN254_EVAL_FN_CHALLENGE_SING_49P_RLC_circuit(
                 A: random_point,
                 coeff: mb.coeff0,
                 SumDlogDivBatched: full_proof.msm_hint_batched.RLCSumDlogDiv,
                 modulus: mod_bn,
             );
-            let (lhs_fA2) = run_BN254_EVAL_FN_CHALLENGE_SING_48P_RLC_circuit(
+            let (lhs_fA2) = run_BN254_EVAL_FN_CHALLENGE_SING_49P_RLC_circuit(
                 A: G1Point { x: mb.x_A2, y: mb.y_A2 },
                 coeff: mb.coeff2,
                 SumDlogDivBatched: full_proof.msm_hint_batched.RLCSumDlogDiv,
