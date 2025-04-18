@@ -6,9 +6,9 @@ import { UltraHonkBackend } from "@aztec/bb.js";
 import { flattenFieldsAsArray } from "./helpers/proof";
 import { getHonkCallData, init, poseidonHashBN254 } from 'garaga';
 import { bytecode, abi } from "./assets/circuit.json";
-import { abi as verifierAbi } from "./assets/verifier.json";
+import { abi as mainAbi } from "./assets/main.json";
 import vkUrl from './assets/vk.bin?url';
-import { RpcProvider, Contract } from 'starknet';
+import { RpcProvider, Contract, Account, constants } from 'starknet';
 import initNoirC from "@noir-lang/noirc_abi";
 import initACVM from "@noir-lang/acvm_js";
 import acvm from "@noir-lang/acvm_js/web/acvm_js_bg.wasm?url";
@@ -130,16 +130,31 @@ function App() {
       // Connect wallet
       updateState(ProofState.ConnectingWallet);
 
+      const provider = new RpcProvider({ nodeUrl: 'http://127.0.0.1:5050/rpc' });
+
+      // initialize existing pre-deployed account 0 of Devnet
+      const privateKey = '0x71d7bb07b9a64f6f78ac4c816aff4da9';
+      const accountAddress = '0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691';
+
+      const account = new Account(
+        provider,
+        accountAddress,
+        privateKey,
+        undefined,
+        constants.TRANSACTION_VERSION.V3
+      );
+
       // Send transaction
       updateState(ProofState.SendingTransaction);
 
-      const provider = new RpcProvider({ nodeUrl: 'http://127.0.0.1:5050/rpc' });
-      // TODO: use conract address from the result of the `make deploy-verifier` step
-      const contractAddress = '0x07b7108d835db423ec3883bb3934250ff0a2068b6969f95f40be623cfed3b931';
-      const verifierContract = new Contract(verifierAbi, contractAddress, provider);
+      const contractAddress = '0x02f00c35153f2dd515d032e882b0acf0302862ec35d9ff0393bb3966ac30c835';
+      const mainContract = new Contract(mainAbi, contractAddress, provider);
+
+      mainContract.connect(account);
       
       // Check verification
-      const res = await verifierContract.verify_ultra_keccak_honk_proof(callData.slice(1));
+      const res = await mainContract.add_solution(callData); // keep the number of elements to pass to the verifier library call
+      await provider.waitForTransaction(res.transaction_hash);
       console.log(res);
 
       updateState(ProofState.ProofVerified);

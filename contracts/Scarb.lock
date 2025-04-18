@@ -7,6 +7,10 @@ version = "0.17.0"
 source = "git+https://github.com/keep-starknet-strange/garaga.git?tag=v0.17.0#ee2ffcaf4f9ec6e1108db934516182d8d2362646"
 
 [[package]]
+name = "main"
+version = "0.1.0"
+
+[[package]]
 name = "verifier"
 version = "0.1.0"
 dependencies = [
