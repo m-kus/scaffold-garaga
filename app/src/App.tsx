@@ -8,7 +8,8 @@ import { getHonkCallData, init, poseidonHashBN254 } from 'garaga';
 import { bytecode, abi } from "./assets/circuit.json";
 import { abi as mainAbi } from "./assets/main.json";
 import vkUrl from './assets/vk.bin?url';
-import { RpcProvider, Contract, Account, constants } from 'starknet';
+import { RpcProvider, Contract, WalletAccount } from 'starknet';
+import { connect } from "@starknet-io/get-starknet"
 import initNoirC from "@noir-lang/noirc_abi";
 import initACVM from "@noir-lang/acvm_js";
 import acvm from "@noir-lang/acvm_js/web/acvm_js_bg.wasm?url";
@@ -130,29 +131,24 @@ function App() {
       // Connect wallet
       updateState(ProofState.ConnectingWallet);
 
-      const provider = new RpcProvider({ nodeUrl: 'http://127.0.0.1:5050/rpc' });
+      const provider = new RpcProvider({ nodeUrl: 'https://free-rpc.nethermind.io/sepolia-juno/v0_8' })
 
-      // initialize existing pre-deployed account 0 of Devnet
-      const privateKey = '0x71d7bb07b9a64f6f78ac4c816aff4da9';
-      const accountAddress = '0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691';
-
-      const account = new Account(
+      const selectedWalletSWO = await connect();
+      if (!selectedWalletSWO) {
+        throw new Error('No wallet connected');
+      }
+      const myWalletAccount = await WalletAccount.connect(
         provider,
-        accountAddress,
-        privateKey,
-        undefined,
-        constants.TRANSACTION_VERSION.V3
+        selectedWalletSWO
       );
-
+      console.log(myWalletAccount);
       // Send transaction
       updateState(ProofState.SendingTransaction);
 
       // TODO: use contract address from the result of the `make deploy-main` step
-      const contractAddress = '0x04ac061fa65995bcb6f3b2011d5934e133a8c0a09b03853559ab670f632fc3bd';
-      const mainContract = new Contract(mainAbi, contractAddress, provider);
+      const contractAddress = '0x01769e46f3fc02175367c61fda2e17e7be68fa17c9e0fd927cecf09337d6d441';
+      const mainContract = new Contract(mainAbi, contractAddress, myWalletAccount);
 
-      mainContract.connect(account);
-      
       // Check verification
       const res = await mainContract.add_solution(callData); // keep the number of elements to pass to the verifier library call
       await provider.waitForTransaction(res.transaction_hash);
